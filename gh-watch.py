@@ -359,8 +359,14 @@ class Cache(Data):
   def fetch_cghp(self, fetch):
 
     log.info('searching in r/coolgithubprojects...')
-    r = requests.get(CGHP_URL)
-    r.raise_for_status()
+    while True:
+      try:
+        r = requests.get(CGHP_URL)
+        break
+      except (requests.HTTPError, requests.Timeout) as e:
+        log.error(repr(e))
+        log.error('retry in {} seconds...'.format(RETRY))
+        sleep(RETRY)
     log.debug('{} received.'.format(r.url))
     resp = r.json()['data']['children']
     log.debug('{} repositories returned.'.format(len(resp)))
