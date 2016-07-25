@@ -362,13 +362,18 @@ class Cache(Data):
     while True:
       try:
         r = requests.get(CGHP_URL)
-        break
+        log.debug('{} received.'.format(r.url))
+        resp = r.json()
+        if 'error' not in resp:
+          break
+        log.error('{error}: {message}'.format(**resp))
+        log.error('retry in {} seconds...'.format(RETRY))
+        sleep(RETRY)
       except (requests.HTTPError, requests.Timeout) as e:
         log.error(repr(e))
         log.error('retry in {} seconds...'.format(RETRY))
         sleep(RETRY)
-    log.debug('{} received.'.format(r.url))
-    resp = r.json()['data']['children']
+    resp = resp['data']['children']
     log.debug('{} repositories returned.'.format(len(resp)))
 
     langs = self.config['accept_languages']
@@ -379,7 +384,7 @@ class Cache(Data):
         log.warning('{} is skipped.'.format(r['url']))
         continue
       fn = r['url'].replace('https://github.com/', '')
-      user, repo = fn.split('/')
+      user, repo = fn.rstrip('/').split('/')
       lang = flair.replace('CPP', 'C++').title()
       repo = {
         'full_name': fn,
