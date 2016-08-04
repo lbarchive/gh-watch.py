@@ -67,16 +67,15 @@ def print_repo(r):
     print()
 
 
-def check_license(r):
+def check_license(r, cache):
 
   fn = r['full_name']
   d = SEARCH_CODE_QS_DICT.copy()
   d['q'] += ' repo:{}'.format(fn)
 
   log.debug('checking {} for license...'.format(fn))
-  r = requests.get(SEARCH_CODE_URL, params=d, timeout=TIMEOUT)
-  r.raise_for_status()
-  return r.json()['total_count'] > 0
+  resp = cache.gh_req(SEARCH_CODE_URL, params=d, timeout=TIMEOUT)
+  return resp.json()['total_count'] > 0
 
 
 def filter_repo(r, config):
@@ -268,6 +267,27 @@ class Cache(Data):
       self['fetches'][fetch['key']] = time()
       self.updated = True
 
+  def gh_req(self, URL, raise_error=True, **kwds):
+
+    rl_type = 'search' if '/search/' in URL else 'general'
+    rl_type = 'api_rl_' + rl_type
+    rl = self.get(rl_type, {'remain': 1, 'reset': 0})
+
+    if rl['remain'] == 0 and time() < rl['reset']:
+      s = rl['reset'] - time()
+      log.info('sleeping for {} for ratelimit reset...'.format(s))
+      sleep(s)
+
+    r = requests.get(URL, **kwds)
+    rl['remain'] = int(r.headers['X-RateLimit-Remaining'])
+    rl['reset'] = int(r.headers['X-RateLimit-Reset'])
+    self[rl_type] = rl
+    msg = 'GitHub API {}: {} requests remained, reset in {} seconds'
+    log.debug(msg.format(rl_type, rl['remain'], int(rl['reset'] - time())))
+    if raise_error:
+      r.raise_for_status()
+    return r
+
   def fetch_search(self, fetch):
 
     d = {
@@ -277,10 +297,7 @@ class Cache(Data):
     }
 
     log.info('searching for [{}]...'.format(d['q']))
-    r = requests.get(SEARCH_REPO_URL, params=d)
-    r.raise_for_status()
-    log.debug('{} received.'.format(r.url))
-    resp = r.json()
+    resp = self.gh_req(SEARCH_REPO_URL, params=d).json()
     log.debug('{:,} repositories matched in total'.format(resp['total_count']))
     log.debug('{} repositories returned.'.format(len(resp['items'])))
 
@@ -447,7 +464,7 @@ def main():
       r['license'] = None
       while True:
         try:
-          r['license'] = check_license(r)
+          r['license'] = check_license(r, cache)
           cache.updated = True
           break
         except (requests.HTTPError, requests.Timeout) as e:
@@ -485,8 +502,7 @@ def main():
       elif ans == 'r':
         API_URL = README_URL.format(**r)
         headers = {'Accept': 'application/vnd.github.v3.object'}
-        log.debug('reguesting {}...'.format(API_URL))
-        resp = requests.get(API_URL, headers=headers)
+        resp = cache.gh_req(API_URL, raise_error=False, headers=headers)
         if resp.status_code == requests.codes.not_found:
           log.info('{} does not have an README.'.format(fn))
           continue
