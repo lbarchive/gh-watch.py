@@ -433,6 +433,8 @@ def main():
   p.add_argument('--debug', '-d', action='store_true',
                  help='print out debugging messages')
   p.add_argument('--force', '-f', action='store_true',
+                 help='force fetching ones have reached interval time')
+  p.add_argument('--force-all', '-F', action='store_true',
                  help='force fetching all')
   args = p.parse_args()
 
@@ -445,6 +447,9 @@ def main():
 
   if args.force:
     log.info('forcing fetching...')
+    cache.fetch()
+  elif args.force_all:
+    log.info('forcing fetching all...')
     cache['fetches'].clear()
     cache.fetch()
   elif not cache['repos']:
