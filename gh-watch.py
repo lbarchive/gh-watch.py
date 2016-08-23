@@ -55,9 +55,9 @@ def getch():
 
 def print_repo(r):
 
+  print('https://github.com/', end='')
   print('\033[32m{user}\033[0m/\033[33m{repo}\033[0m'.format(**r))
   print('{language:20s} {stargazers_count:6,} / {forks_count:6,}'.format(**r))
-  print(r['html_url'])
   if r['homepage']:
     print(r['homepage'])
   print()
