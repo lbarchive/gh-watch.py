@@ -11,6 +11,7 @@ import re
 import subprocess
 import sys
 import tty
+from datetime import datetime, timedelta
 from os import path
 from time import sleep, time
 
@@ -276,7 +277,9 @@ class Cache(Data):
 
     if rl['remain'] == 0 and time() < rl['reset']:
       s = rl['reset'] - time()
-      log.info('sleeping for {} for ratelimit reset...'.format(s))
+      t = datetime.now() + timedelta(seconds=s)
+      fmt = 'sleeping until {} ({:.1f} seconds) for ratelimit reset...'
+      log.info(fmt.format(t, s))
       sleep(s)
 
     r = requests.get(URL, **kwds)
