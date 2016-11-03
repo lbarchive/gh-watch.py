@@ -164,6 +164,7 @@ class Data():
 
     with open(self.JSON, 'w') as f:
       json.dump(self.data, f)
+      self.updated = False
 
     log.info('{} saved.'.format(self.JSON))
 
@@ -537,8 +538,12 @@ def main():
       elif ans == ' ':
         break
       elif ans == 'q':
+        cache.save()
+        repos.save()
         return
     print()
+  cache.save()
+  repos.save()
 
 
 if __name__ == '__main__':
