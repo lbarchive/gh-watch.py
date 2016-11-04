@@ -38,8 +38,9 @@ CGHP_URL = 'https://www.reddit.com/r/coolgithubprojects/new/.json'
 CGHP_RE = re.compile(r'https://github\.com/([0-9a-zA-Z-]+)/([0-9a-zA-Z-]+).*')
 
 log_fmt = '[%(asctime)s][%(levelname)6s] %(message)s'
-logging.basicConfig(level=logging.INFO, format=log_fmt)
-log = logging.getLogger()
+logging.basicConfig(format=log_fmt)
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 # http://code.activestate.com/recipes/134892/
