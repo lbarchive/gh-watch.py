@@ -353,10 +353,9 @@ class Cache(Data):
     log.debug('{} repositories returned.'.format(len(f.entries)))
 
     for r in f.entries:
-      fn = r.title.split(' ', 1)[0]
-      desc, lang = r.description.rsplit('(', 1)
-      desc = desc.rstrip('\n')
-      lang = lang.split(')', 1)[0]
+      fn, lang = r.title.split(' ', 1)
+      desc = r.description.rstrip('\n') if hasattr(r, 'description') else ''
+      lang = lang.split(' - ')[1]
       user, repo = fn.split('/')
       repo = {
         'full_name': fn,
