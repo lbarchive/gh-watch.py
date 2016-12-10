@@ -442,6 +442,8 @@ def main():
                  help='force fetching ones have reached interval time')
   p.add_argument('--force-all', '-F', action='store_true',
                  help='force fetching all')
+  p.add_argument('--check', '-c', action='store_true',
+                 help='check licenses at once, non-interactive')
   args = p.parse_args()
 
   if args.debug:
@@ -492,7 +494,7 @@ def main():
 
     print('[{:{w}}/{}] '.format(i, c, w=w), end='')
     print_repo(r)
-    while True:
+    while True and not args.check:
       print('[z]ap [s]nooze [r]eadme [c]heck ', end='')
       if r['homepage']:
         print('[h]omepage ', end='')
@@ -541,7 +543,8 @@ def main():
         cache.save()
         repos.save()
         return
-    print()
+    if not args.check:
+      print()
   cache.save()
   repos.save()
 
