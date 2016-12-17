@@ -35,7 +35,13 @@ SEARCH_CODE_QS_DICT = {
 README_URL = 'https://api.github.com/repos/{full_name}/readme'
 RSS_URL_BASE = 'http://github-trends.ryotarai.info/rss/github_trends_{}_{}.rss'
 CGHP_URL = 'https://www.reddit.com/r/coolgithubprojects/new/.json'
-CGHP_RE = re.compile(r'https://github\.com/([0-9a-zA-Z-]+)/([0-9a-zA-Z-]+).*')
+CGHP_RES = [
+  re.compile(RE)
+  for RE in (
+    r'https?://github\.com/(?P<user>[0-9a-zA-Z-]+)/(?P<repo>[0-9a-zA-Z-]+).*',
+    r'https?://(?P<user>[0-9a-zA-Z-]+)\.github\.io/(?P<repo>[0-9a-zA-Z-]+)/.*',
+  )
+]
 
 log_fmt = '[%(asctime)s][%(levelname)6s] %(message)s'
 logging.basicConfig(format=log_fmt)
@@ -402,11 +408,14 @@ class Cache(Data):
     for r in resp:
       r = r['data']
       flair = r['link_flair_text']
-      m = CGHP_RE.match(r['url'])
-      if not m:
+      for RE in CGHP_RES:
+        m = RE.match(r['url'])
+        if m:
+          break
+      else:
         log.warning('{} not matched the pattern, skipped.'.format(r['url']))
         continue
-      user, repo = m.group(1), m.group(2)
+      user, repo = m.group('user'), m.group('repo')
       fn = '{}/{}'.format(user, repo)
       lang = flair.replace('CPP', 'C++').title()
       repo = {
