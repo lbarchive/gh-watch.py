@@ -42,7 +42,7 @@ CGHP_RES = [
   )
 ]
 
-log_fmt = '[%(asctime)s][%(levelname)6s] %(message)s'
+log_fmt = '[%(asctime)s][%(levelname)7s] %(message)s'
 logging.basicConfig(format=log_fmt)
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
