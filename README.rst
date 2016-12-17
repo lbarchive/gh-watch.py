@@ -20,7 +20,6 @@ read the code or nudge me.
 Copyright
 =========
 
-This script has been placed in public domain, or licensed under the UNLICENSE_,
-if not applicable.
+UNLICENSE_ has been applied to contents of this repository.
 
 .. _UNLICENSE: UNLICENSE

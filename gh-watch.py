@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Written by Yu-Jie Lin in 2016
-# This script has been placed in public domain, or licensed under the
-# UNLICENSE, if not applicable.
+# UNLICENSE has been applied to this script.
 
 import argparse
 import base64
