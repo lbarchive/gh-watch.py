@@ -285,8 +285,8 @@ class Cache(Data):
     if rl['remain'] == 0 and time() < rl['reset']:
       s = rl['reset'] - time()
       t = datetime.now() + timedelta(seconds=s)
-      fmt = 'sleeping until {} ({:.1f} seconds) for ratelimit reset...'
-      log.info(fmt.format(t, s))
+      fmt = 'sleeping until {} ({:.0f} seconds) for ratelimit reset...'
+      log.info(fmt.format(t.strftime('%H:%M:%S'), s))
       sleep(s)
 
     r = requests.get(URL, **kwds)
