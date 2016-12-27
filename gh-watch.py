@@ -88,13 +88,13 @@ def check_license(r, cache):
 
 def filter_repo(r, config):
 
-  for f in config.filters_repo:
+  for f in config.filters_repo + config.filters_repo_desc:
     if f.search(r['repo']):
       msg = '{} repo name matched /{}/, skipped'
       log.debug(msg.format(r['full_name'], f.pattern))
       return True
 
-  for f in config.filters_description:
+  for f in config.filters_description + config.filters_repo_desc:
     if r['description'] is None:
       continue
     if f.search(r['description']):
@@ -181,6 +181,7 @@ class Config(Data):
   DICT = {
     'cmd_readme': 'less',
     'accept_languages': ['All'],
+    'filters_repo_desc': [],
     'filters_repo': [],
     'filters_description': [],
     'snooze_seconds': 7 * 86400,
@@ -191,6 +192,10 @@ class Config(Data):
     super(self.__class__, self).__init__()
 
     # compile filters
+    self.filters_repo_desc = []
+    for f in self['filters_repo_desc']:
+      self.filters_repo_desc.append(re.compile(f))
+
     self.filters_repo = []
     for f in self['filters_repo']:
       self.filters_repo.append(re.compile(f))
