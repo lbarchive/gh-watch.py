@@ -33,8 +33,9 @@ SEARCH_CODE_QS_DICT = {
 }
 README_URL = 'https://api.github.com/repos/{full_name}/readme'
 RSS_URL_BASE = 'http://github-trends.ryotarai.info/rss/github_trends_{}_{}.rss'
-CGHP_URL = 'https://www.reddit.com/r/coolgithubprojects/new/.json'
-CGHP_RES = [
+CGHP = 'r/coolgithubprojects'
+REDDIT_URL = 'https://www.reddit.com/{}/new/.json'
+REDDIT_RES = [
   re.compile(RE)
   for RE in (
     r'https?://github\.com/(?P<user>[0-9a-zA-Z-]+)/(?P<repo>[0-9a-zA-Z-]+).*',
@@ -65,9 +66,19 @@ def print_repo(r):
 
   print('https://github.com/', end='')
   print('\033[32m{user}\033[0m/\033[33m{repo}\033[0m'.format(**r))
-  print('{language:20s} {stargazers_count:6,} / {forks_count:6,}'.format(**r))
-  if r['homepage']:
-    print(r['homepage'])
+  if r['type'] == 'search':
+    fmt = '{language:20s} {stargazers_count:6,} / {forks_count:6,}'
+    print(fmt.format(**r))
+    if r['homepage']:
+      print(r['homepage'])
+  elif r['type'] == 'trend':
+    print('{language:20s} Trending'.format(**r))
+  elif r['type'] == 'r':
+    if r['sub'] == 'r/coolgithubproject':
+      print('{language:20s} Score = {score:7,}'.format(**r))
+    else:
+      print('{sub:20s} Score = {score:7,}'.format(**r))
+    print(r['thread'])
   print()
 
   if r['description']:
@@ -272,8 +283,8 @@ class Cache(Data):
         self.fetch_search(fetch)
       elif fetch['type'] == 'trend':
         self.fetch_trend(fetch)
-      elif fetch['type'] == 'r/coolgithubprojects':
-        self.fetch_cghp(fetch)
+      elif fetch['type'] == 'r':
+        self.fetch_r(fetch)
       else:
         log.error('unknown fetch: {}'.format(fetch['key']))
         continue
@@ -322,6 +333,7 @@ class Cache(Data):
       fn = r['full_name']
       lang = r['language']
       repo = {
+        'type': 'search',
         'full_name': fn,
         'user': r['owner']['login'],
         'repo': r['name'],
@@ -368,14 +380,12 @@ class Cache(Data):
       lang = lang.split(' - ')[1]
       user, repo = fn.split('/')
       repo = {
+        'type': 'trend',
         'full_name': fn,
         'user': user,
         'repo': repo,
         'language': lang,
-        'stargazers_count': -1,
-        'forks_count': -1,
         'html_url': r.link,
-        'homepage': None,
         'description': desc,
       }
 
@@ -388,12 +398,12 @@ class Cache(Data):
       self['repos'][fn] = repo
       self.updated = True
 
-  def fetch_cghp(self, fetch):
+  def fetch_r(self, fetch):
 
-    log.info('searching in r/coolgithubprojects...')
+    log.info('searching in {}...'.format(fetch['key']))
     while True:
       try:
-        r = requests.get(CGHP_URL)
+        r = requests.get(REDDIT_URL.format(fetch['key']))
         log.debug('{} received.'.format(r.url))
         resp = r.json()
         if 'error' not in resp:
@@ -411,26 +421,30 @@ class Cache(Data):
     langs = self.config['accept_languages']
     for r in resp:
       r = r['data']
-      flair = r['link_flair_text']
-      for RE in CGHP_RES:
+      for RE in REDDIT_RES:
         m = RE.match(r['url'])
         if m:
           break
       else:
-        log.warning('{} not matched the pattern, skipped.'.format(r['url']))
+        # only give warnings on r/coolgithubprojects
+        if fetch['key'] == CGHP:
+          log.warning('{} not matched the pattern, skipped.'.format(r['url']))
         continue
       user, repo = m.group('user'), m.group('repo')
       fn = '{}/{}'.format(user, repo)
-      lang = flair.replace('CPP', 'C++').title()
+      lang = 'Unknown'
+      if fetch == CGHP:
+        lang = r['link_flair_text'].replace('CPP', 'C++').title()
       repo = {
+        'type': 'r',
+        'sub': fetch['key'],
         'full_name': fn,
         'user': user,
         'repo': repo,
         'language': lang,
-        'stargazers_count': -2,
-        'forks_count': -2,
+        'score': r['score'],
         'html_url': r['url'],
-        'homepage': None,
+        'thread': 'https://www.reddit.com' + r['permalink'],
         'description': r['title'],
       }
 
@@ -438,7 +452,8 @@ class Cache(Data):
         continue
       if fn in self['repos'] or fn in self.repos:
         continue
-      if 'All' not in langs and lang not in langs:
+      if fetch['key'] == CGHP \
+         and 'All' not in langs and lang not in langs:
         continue
 
       log.debug('adding {} to cache...'.format(fn))
@@ -509,8 +524,10 @@ def main():
     print_repo(r)
     while True and not args.check:
       print('[z]ap [s]nooze [r]eadme [c]heck ', end='')
-      if r['homepage']:
+      if r['type'] == 'search':
         print('[h]omepage ', end='')
+      elif r['type'] == 'cghp':
+        print('[t]thread ', end='')
       print('[space] skip [q]uit? ', end='')
       sys.stdout.flush()
       ans = getch()
@@ -548,8 +565,12 @@ def main():
       elif ans == 'c':
         cmd = config['cmd_url']
         subprocess.Popen(cmd.format(r['html_url']), shell=True)
-      elif ans == 'h' and r['homepage']:
+      elif ans == 'h' and r['type'] == 'search' and r['homepage']:
+        cmd = config['cmd_url']
         subprocess.Popen(cmd.format(r['homepage']), shell=True)
+      elif ans == 't' and r['type'] == 'cghp' and r['thread']:
+        cmd = config['cmd_url']
+        subprocess.Popen(cmd.format(r['thread']), shell=True)
       elif ans == ' ':
         break
       elif ans == 'q':
