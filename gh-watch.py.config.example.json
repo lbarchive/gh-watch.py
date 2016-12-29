@@ -1,0 +1,61 @@
+{
+  "cmd_url": "firefox-bin -P Normal --new-tab '{}' 2>/dev/null",
+  "cmd_readme_md": "less",
+  "accept_languages":
+  [
+    "",
+    "Bash",
+    "C",
+    "C++",
+    "Go",
+    "Python"
+  ],
+  "filters_repo_desc":
+  [
+    "(regex|regular expression) filter both repository"
+  ],
+  "filters_repo":
+  [
+    "only the repo(?i)"
+  ],
+  "filters_description":
+  [
+    "only the [Dd]escription"
+  ],
+  "fetches":
+  [
+    {
+      "key": "search_something",
+      "type": "search",
+      "interval": 3600,
+      "q": "keywords here",
+      "sort": "updated",
+      "per_page": 100
+    },
+    {
+      "key": "daily_trend",
+      "type": "trend",
+      "interval": 10800,
+      "period": "daily",
+      "languages": "accept_languages"
+    },
+    {
+      "key": "weekly_trend",
+      "type": "trend",
+      "interval": 86400,
+      "period": "weekly",
+      "languages": "accept_languages"
+    },
+    {
+      "key": "r/coolgithubprojects",
+      "type": "r",
+      "interval": 86400
+    },
+    {
+      "key": "r/Python",
+      "type": "r",
+      "interval": 86400
+    }
+  ]
+}
+

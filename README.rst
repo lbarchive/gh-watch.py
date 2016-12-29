@@ -8,13 +8,20 @@ It can find through three sources:
 
 * GitHub search,
 * `GitHub Trends RSS`_, and
-* `r/coolgithubprojects`_.
+* reddit
 
 .. _GitHub Trends RSS: http://github-trends.ryotarai.info/
-.. _r/coolgithubprojects: https://www.reddit.com/r/coolgithubprojects/
 
-I don't expect anyone would use it, so if you think about trying this, either
-read the code or nudge me.
+
+Files
+=====
+
+* ``/tmp/gh-watch.py.cache.json``: cache file
+* ``~/.config/gh-watch.py.config.json``: configuration file, see |excon|_.
+* ``~/.local/share/gh-watch.py.repos.json``: skipped, zapped repos
+
+.. |excon| replace:: ``gh-watch.py.config.example.json``
+.. _excon:  gh-watch.py.config.example.json
 
 
 Copyright
