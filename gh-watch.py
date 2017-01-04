@@ -503,15 +503,24 @@ def main():
 
     if 'license' not in r:
       r['license'] = None
+      skip = False
       while True:
         try:
           r['license'] = check_license(r, cache)
           cache.updated = True
           break
         except (requests.HTTPError, requests.Timeout) as e:
-          log.error(repr(e))
+          msg = repr(e)
+          log.error(msg)
+          if '422 Client Error' in msg:
+            log.error('skipping...'.format(RETRY))
+            skip = True
+            break
           log.error('retry in {} seconds...'.format(RETRY))
           sleep(RETRY)
+
+      if skip:
+        continue
 
       if not r['license']:
         repos.snooze(fn)
