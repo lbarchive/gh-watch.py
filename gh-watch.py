@@ -483,6 +483,31 @@ def recheck(config, repos):
   log.info('{} repos removed'.format(removals))
 
 
+def analyze(repos):
+
+  from collections import Counter
+
+  data = {}
+  for key in ('usernames', 'reponames', 'words'):
+    data[key] = Counter()
+
+  RE_WORD = re.compile('[-.]')
+  for user_repo in repos['zap']:
+    user, repo = user_repo.split('/')
+    data['usernames'].update((user, ))
+    data['reponames'].update((repo, ))
+    data['words'].update((r for r in RE_WORD.split(repo) if r))
+
+  log.info('{:6,d} usernames'.format(len(data['usernames'])))
+  log.info('{:6,d} repositories'.format(len(repos['zap'])))
+
+  TOP = 20
+  for k, v in data.items():
+    log.info('most zapped {}:'.format(k))
+    for w, c in v.most_common(TOP):
+      log.info('{:3d}: {}'.format(c, w))
+
+
 def main():
 
   p = argparse.ArgumentParser()
@@ -496,6 +521,8 @@ def main():
                  help='check licenses at once, non-interactive')
   p.add_argument('--recheck', '-r', action='store_true',
                  help='recheck filters against repositories')
+  p.add_argument('--analyze', '-a', action='store_true',
+                 help='provide some statistics')
   args = p.parse_args()
 
   if args.debug:
@@ -507,6 +534,9 @@ def main():
 
   if args.recheck:
     recheck(config, repos)
+    return
+  elif args.analyze:
+    analyze(repos)
     return
   elif args.force:
     log.info('forcing fetching...')
