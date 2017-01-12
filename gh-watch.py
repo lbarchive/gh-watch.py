@@ -256,6 +256,11 @@ class Repos(Data):
     self['zap'].append(full_name)
     self.updated = True
 
+  def remove_zap(self, full_name):
+
+    self['zap'].remove(full_name)
+    self.updated = True
+
 
 class Cache(Data):
 
@@ -461,6 +466,23 @@ class Cache(Data):
       self.updated = True
 
 
+def recheck(config, repos):
+
+  log.info('rechecking filters against repositories...')
+  log.info('rechecking with filters_repo and filters_repo_desc...')
+  removals = 0
+  for user_repo in repos['zap'][:]:
+    user, repo = user_repo.split('/')
+    for f in config.filters_repo + config.filters_repo_desc:
+      if not f.search(repo):
+        continue
+      msg = '{} repo name matched /{}/, removed'
+      log.info(msg.format(repo, f.pattern))
+      repos.remove_zap(user_repo)
+      removals += 1
+  log.info('{} repos removed'.format(removals))
+
+
 def main():
 
   p = argparse.ArgumentParser()
@@ -472,6 +494,8 @@ def main():
                  help='force fetching all')
   p.add_argument('--check', '-c', action='store_true',
                  help='check licenses at once, non-interactive')
+  p.add_argument('--recheck', '-r', action='store_true',
+                 help='recheck filters against repositories')
   args = p.parse_args()
 
   if args.debug:
@@ -481,7 +505,10 @@ def main():
   repos = Repos(config)
   cache = Cache(config, repos)
 
-  if args.force:
+  if args.recheck:
+    recheck(config, repos)
+    return
+  elif args.force:
     log.info('forcing fetching...')
     cache.fetch()
   elif args.force_all:
