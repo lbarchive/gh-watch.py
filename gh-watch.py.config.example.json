@@ -10,6 +10,10 @@
     "Go",
     "Python"
   ],
+  "filters_user":
+  [
+    "\\bnosuchusername\\b"
+  ],
   "filters_repo_desc":
   [
     "(regex|regular expression) filter both repository"

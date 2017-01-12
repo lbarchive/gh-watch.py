@@ -99,6 +99,12 @@ def check_license(r, cache):
 
 def filter_repo(r, config):
 
+  for f in config.filters_user:
+    if f.search(r['user']):
+      msg = '{} username matched /{}/, skipped'
+      log.debug(msg.format(r['user'], f.pattern))
+      return True
+
   for f in config.filters_repo + config.filters_repo_desc:
     if f.search(r['repo']):
       msg = '{} repo name matched /{}/, skipped'
@@ -192,6 +198,7 @@ class Config(Data):
   DICT = {
     'cmd_readme': 'less',
     'accept_languages': ['All'],
+    'filters_user': [],
     'filters_repo_desc': [],
     'filters_repo': [],
     'filters_description': [],
@@ -203,6 +210,10 @@ class Config(Data):
     super(self.__class__, self).__init__()
 
     # compile filters
+    self.filters_user = []
+    for f in self['filters_user']:
+      self.filters_user.append(re.compile(f))
+
     self.filters_repo_desc = []
     for f in self['filters_repo_desc']:
       self.filters_repo_desc.append(re.compile(f))
@@ -473,6 +484,13 @@ def recheck(config, repos):
   removals = 0
   for user_repo in repos['zap'][:]:
     user, repo = user_repo.split('/')
+    for f in config.filters_user:
+      if not f.search(user):
+        continue
+      msg = '{} username matched /{}/, removed'
+      log.info(msg.format(user, f.pattern))
+      repos.remove_zap(user_repo)
+      removals += 1
     for f in config.filters_repo + config.filters_repo_desc:
       if not f.search(repo):
         continue
